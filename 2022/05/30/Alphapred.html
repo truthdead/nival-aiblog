@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Alphapred | Nival’s AI blog</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Alphapred" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="AlphaPred: A Machine Learning Tool to Aid Alpha Thalassemia Screening" />
+<meta property="og:description" content="AlphaPred: A Machine Learning Tool to Aid Alpha Thalassemia Screening" />
+<link rel="canonical" href="https://truthdead.github.io/nival-aiblog/2022/05/30/Alphapred.html" />
+<meta property="og:url" content="https://truthdead.github.io/nival-aiblog/2022/05/30/Alphapred.html" />
+<meta property="og:site_name" content="Nival’s AI blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-30T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Alphapred" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-30T00:00:00-05:00","datePublished":"2022-05-30T00:00:00-05:00","description":"AlphaPred: A Machine Learning Tool to Aid Alpha Thalassemia Screening","headline":"Alphapred","mainEntityOfPage":{"@type":"WebPage","@id":"https://truthdead.github.io/nival-aiblog/2022/05/30/Alphapred.html"},"url":"https://truthdead.github.io/nival-aiblog/2022/05/30/Alphapred.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/nival-aiblog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://truthdead.github.io/nival-aiblog/feed.xml" title="Nival's AI blog" /><link rel="shortcut icon" type="image/x-icon" href="/nival-aiblog/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/nival-aiblog/">Nival&#39;s AI blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/nival-aiblog/about/">About Me</a><a class="page-link" href="/nival-aiblog/search/">Search</a><a class="page-link" href="/nival-aiblog/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Alphapred</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-05-30T00:00:00-05:00" itemprop="datePublished">
+        May 30, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      16 min read
+    
+</span></p>
+
+    
+
+    </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h1 id="alphapred-a-machine-learning-tool-to-aid-alpha-thalassemia-screening">AlphaPred: A Machine Learning Tool to Aid Alpha Thalassemia Screening</h1>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Thalasssemias occur because of mutations in the globin gene, which encodes the globin protein. Globin is part of hemoglobin, and a lack of globin production due to these mutations can cause reduced hemoglobin production, which in turn will impair oxygen supply to vital organs.</p>
+
+<p>Alpha thalassemia is a constellation of four clinical conditions; two carrier states and two disease states, with different manifestations : Silent carrier state results from a single alpha globin mutation, and is either completely normal or causes mild anemia ; alpha thalassemia trait usually occurs due to two mutated genes, and cause mild to moderate anemia and minimal clinical symptoms; hemoglobin H disease is a result of only one functional gene, and causes severe anemia and clinical symptoms; hydrops fetalis occurs when all four genes are dysfunctional, and causes still birth.</p>
+
+<p>Silent carriers and alpha traits are known as ‘carriers’; they are asymptomatic or have mild symptoms but can pass the mutated gene to the next generation. Reproduction of two carriers thus can give birth to a ‘thalassemia major’ patient, who may either suffer disabling symptoms of hemoglobin H disease or be still born. Therefore, carrier detection lies at the heart of alpha thalassemia prevention.</p>
+
+<p>A definitive diagnosis of Thalassemia carrier state usually starts with an initial analysis of red cell indices (usually via a full blood count (FBC)). Mean corpuscular volume (MCV) and mean corpuscular hemoglobin (MCH) levels below 80fL and 27pg respectively are considered cut-off levels to diagnose a person as a ‘non-carrier’. Those who have low MCV and MCH levels (below the cut-off) are then assessed for other causes of microcytic (low MCV) hypochromic (low MCH) anemia and are usually given a trial of oral iron therapy for three months, because iron deficiency is the commonest cause of such anemia. If low red cell indices persist even after iron therapy, Hemoglobin electrophoresis via High performance liquid chromatography (HPLC) or Capillary electrophoresis is done to exclude beta-thalassemia carrier state, in which the HbA2 levels are unusually high. (a value of more than 3.5% is usually considered as evidence to diagnose beta-thalassemia carrier state). If HPLC results are normal with a normal level of HbA2, then the individual requires genetic testing to exclude an Alpha Thalassemia carrier state.</p>
+
+<p>90% of countries in the thalassemia belt fall under low- or middle-income categories, making prevention of the disease a challenging task. For the same reasons, data on Thalassemia are not complete. But from reasonable estimations, every year, there are about 68,000 new births suffering from a major thalassemia disorder, including the alpha thalassemia condition known as Hydrops Fetalis, which causes still births. Barring Greece, Italy and Cyprus, numbers in most endemic countries are not showing signs of improvement.</p>
+
+<p>The 118th Executive board meeting of WHO in 2006(36) highlighted this issue and urged the governments to design, develop and implement comprehensive and integrated national programmed for counter the disease, and an effective screening program me was one vital recommendation of the board.</p>
+
+<p>Alpha thalassemia carrier states require expensive genetic testing to diagnose, which is a major issue in scaling up carrier screening in low-income countries. Data driven solutions offer a unique opportunity to this: available individual level data on alpha thalassemia carriers who are already diagnosed via genetic testing, can be used to train models which can detect complex patterns by comparing input data from investigations to the output which is the diagnosis. These models can then operate as intelligent entities which will take new inputs from new individuals, and make accurate diagnoses based on the patterns they already learnt. Artificial Intelligence, specifically Machine Learning, hence, provide a great opportunity in designing these innovative solutions.</p>
+
+<p>While discriminating functions and machine learning approaches in classifying thalassemia and non-thalassemia individuals, alpha thalassemia carriers and normal individuals, and classifying thalassemia minor (carrier) status against other categories have been studied in several studies, no other study in published study has experimented with differentiating between the two alpha thalassemia carrier types-alpha thalassemia traits and silent carriers. This is also the first study attempting to develop a machine learning-based approach for thalassemia diagnosis in Sri Lanka.</p>
+
+<p>This study attempted to build a cost-effective and data driven tool to aid alpha-thalassemia carrier detection in resource-constrained settings. It consisted of two machine learning models, which were incorporated into a web-based application, Alpha-pred.</p>
+
+<h2 id="materials-and-methods">Materials and Methods</h2>
+
+<h3 id="materials">Materials</h3>
+
+<p>The dataset, anonymized and in electronic format (.xlsx file format), was obtained from Human Genetics Unit, Faculty of Medicine, University of Colombo, and the ethical approval for the study was obtained from Postgraduate institute of Medicine, University of Colombo.</p>
+
+<p><img src="https://truthdead.github.io/nival-aiblog/assets/img/2022-05-30-Alphapred/media/image1.png" alt="" />Data belonged to 288 individuals, including Full blood count data (via analysis of a venous blood sample), Hemoglobin variant data via High Performance Liquid Chromatography (HPLC) and alpha thalassemia carrier status obtained via a genetic diagnosis based on the presence of mutations. (Table 01)</p>
+
+<p>Six diagnostic categories (‘phenotype’) were present, based on HPLC results for beta thalassemia traits (carriers) and major individuals, and genetic diagnosis for alpha thalassemia status (alpha thalassemia traits, silent carriers and hemoglobin H disease); ‘normal’ individuals had no full blood count abnormalities and had a negative genetic test. The accuracy of data was verified by a consultant hematologist.</p>
+
+<p>White blood cell parameters were excluded from the analysis since there’s no evidence of their importance in identifying alpha thalassemia carriers.</p>
+
+<p>Python programming language, and python-based libraries; pandas, NumPy, scikit-learn and fastai were used for the modelling process. R programming language and R-based library, tidyverse were used to perform paired t-tests for comparison of means.</p>
+
+<h3 id="methods">Methods</h3>
+
+<p>Two machine learning models were developed, which acted as parts of a diagnostic pipeline: first model differentiated between normal individuals and alpha-thalassemia careers; output of this was fed to a second model which then classified the carriers into alpha thalassemia traits and silent carriers. Therefore, input data going through this pipeline would have one of three following outcomes (predictions): normal, alpha thalassemia trait, thalassemia silent careers. Depending on the results of the models, they were then proposed to be incorporated into a web-based tool, Alpha-pred. (Figure 01) The models were built according to the following three steps with sometimes switching between steps in an iterative software development fashion.</p>
+
+<h3 id="21-exploratory-data-analysis">2.1 Exploratory Data Analysis</h3>
+
+<p>For both model 1 and 2, means of the two groups for each input variable were calculated, and compared using paired t-tests, after the Shapiro-Wilks test confirm the normality of distribution of all groups. This provided corroborative evidence on significant input variables to the models.</p>
+
+<p><img src="https://truthdead.github.io/nival-aiblog/assets/img/2022-05-30-Alphapred/media/image2.png" alt="" /></p>
+
+<p>Figure 01 – Structure and functionality of the proposed diagnostic pipeline, Alpha-pred.</p>
+
+<h3 id="22-data-pre-processing">2.2 Data pre-processing</h3>
+
+<p>As data from only three categories (alpha thalassemia trait, silent carriers and normal) were needed, data elements with other diagnoses were removed from the dataset used for analysis.</p>
+
+<p>Serum ferritin and age was not used in the modelling since they had more than 50% missing data. HbF had to be excluded because it varied with age, and age cannot be included to account to its variability.</p>
+
+<p>Missing values of other variables were filled using the average value of the variable in the outcome category of the particular case (single imputation strategy).</p>
+
+<p>Then the cleaned dataset was split into a train and test set: 20% of data was reserved as testing data. A test set is important in machine learning because a model’s performance can only be reliably tested using data that model has not seen during training.</p>
+
+<p>To tackle the problem of class imbalance, normal group in model 1 was oversampled 1:1 so that both categories had same number of instances. SMOTE oversampling technique was used via the python library imbalanced-learn.</p>
+
+<p><strong>2.3 Model training</strong></p>
+
+<p>Each model initially had three different versions with three machine learning algorithms: a random forest, a gradient boosting machine algorithm (XGBoost library) and an artificial neural network four hidden layers; these were selected for this study based on the superiority of XGBoost and random forests in analyzing tabular data and its interpretability; and the recent advancements in computational power allowing neural networks to perform better with tabular data. The relative performances were compared to select the best performing algorithm.</p>
+
+<p>The nature of the data set allowed the authors to take a supervised machine learning approach. In supervised machine learning, an algorithm is fed both with predictor variables and ground truths(‘labels’). Here, the predictor variables were hematological parameters from full blood count and HPLC, and the labels were the diagnostic categories. Algorithm then trains on the train set, learning patterns in predictor variables that help it to predict the correct category.</p>
+
+<p><strong>2.4 Evaluation</strong></p>
+
+<p>Three metrics were used to evaluate the performance of the models:</p>
+
+<ol>
+  <li>
+    <p>General classification accuracy (range 0-1, presented as a percentage)</p>
+  </li>
+  <li>
+    <p>Recall for the positive class (Sensitivity in identifying alpha thalassemia carriers in model 1, and alpha trait in model 2) – since the aim of the Alphapred tool is to identify alpha thalassemia carriers. (range 0-1, presented as a percentage)</p>
+  </li>
+  <li>
+    <p>Area Under Curve (AUC) of the Receiver Operating Characteristic curve (ROC) (range 0-1, presented as a percentage) –The ROC curve is a graph with:</p>
+  </li>
+</ol>
+
+<!-- end list -->
+
+<ul>
+  <li>
+    <p>The x-axis showing 1 – specificity (= false positive fraction = FP/(FP+TN))</p>
+  </li>
+  <li>
+    <p>The y-axis showing sensitivity (= true positive fraction = TP/(TP+FN))</p>
+  </li>
+</ul>
+
+<p>It gives an overall idea of the diagnostic accuracy of a binary classifier – with 0.5 indicating a random classification.</p>
+
+<h2 id="results">Results</h2>
+
+<p>The final dataset used for analysis consisted of data from 203 individuals. Age distribution varied widely: ranging from 4 months to 77 years. Male proportion was slightly above 50%, and among the diagnostic categories, alpha thalassemia carriers made up nearly 80% of the data (N = 148), while normal individuals made up just over one-fifth of the dataset (N = 55).  (Figure 02)</p>
+
+<p><img src="https://truthdead.github.io/nival-aiblog/assets/img/2022-05-30-Alphapred/media/image3.png" alt="" /></p>
+
+<p>Figure 02 – Demographic characteristics and diagnostic categories of the dataset used for analysis.</p>
+
+<h3 id="results-of-model-01">Results of Model 01</h3>
+
+<p>We designed model 01 to differentiate between Alpha thalassemia carriers (both Alpha thalassemia traits and silent carriers as one group), and normals. </p>
+
+<p>Before modelling, means of input variables between two groups were compared to gain insights into the important variables. Five full blood count variables gave statistically significant results: MCV, MCH, MCHC, Hb, and HCT. Other variables including hemoglobin variants were not significantly different between the two groups. (Table 02)</p>
+
+<table>
+<thead>
+<tr class="header">
+<th>Input variable</th>
+<th>Mean in ‘normal’ individuals</th>
+<th>Mean in Alpha carriers</th>
+<th><p>Mean Difference between ‘normal’ &amp; Alpha carriers</p>
+<p>(95% CI)</p></th>
+<th><p>Absolute</p>
+<p>T-value</p></th>
+<th><p>Statistical Significance</p>
+<p>(P-value)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>MCV(fL)</td>
+<td>81.82</td>
+<td>70.75</td>
+<td>11.07(8.88-13.25)</td>
+<td>10.01</td>
+<td><em><strong>P =2.2x10<sup>-16</sup></strong></em></td>
+</tr>
+<tr class="even">
+<td>MCH(pg)</td>
+<td>27.07</td>
+<td>22.85</td>
+<td>4.22(3.28-5.17)</td>
+<td>8.86</td>
+<td><em><strong>P = 1.22x10<sup>-14</sup></strong></em></td>
+</tr>
+<tr class="odd">
+<td>MCHC(g/dL)</td>
+<td>33.45</td>
+<td>32.06</td>
+<td>1.39(0.85-1.91)</td>
+<td>5.16</td>
+<td><em><strong>P = 9.44x10<sup>-7</sup></strong></em></td>
+</tr>
+<tr class="even">
+<td>Hb(g/dL)</td>
+<td>13.44</td>
+<td>11.54</td>
+<td>1.90(1.44-2.35)</td>
+<td>8.29</td>
+<td><em><strong>P = 2.56x10<sup>-13</sup></strong></em></td>
+</tr>
+<tr class="odd">
+<td>HCT(%)</td>
+<td>33.45</td>
+<td>32.06</td>
+<td>1.39(0.85-1.91)</td>
+<td>5.16</td>
+<td><em><strong>P = 9.45 x 10<sup>-7</sup></strong></em></td>
+</tr>
+<tr class="even">
+<td>HbA(%)</td>
+<td>84.87</td>
+<td>86.75</td>
+<td>1.88(-0.32-4.09)</td>
+<td>1.71</td>
+<td><em>P = 0.09</em></td>
+</tr>
+<tr class="odd">
+<td>HbA2(%)</td>
+<td>2.67</td>
+<td>2.55</td>
+<td>0.12(0.23 – 0.008)</td>
+<td>2.12</td>
+<td><em><strong>P = 0.04</strong></em></td>
+</tr>
+</tbody>
+</table>
+
+<p>Table 02 : <em>Mean Comparison between groups in Model 1</em></p>
+
+<p><em>(*Bold P values are statistically significant at 95% Confidence Interval)</em></p>
+
+<p>Upon evaluation, all machine learning algorithms performed satisfactorily, but XGboost performed better than other two: A classification accuracy of 83%, Sensitivity of 84% and AUC of 0.8 (Table 03). The confusion matrix is plotted in Figure 03.</p>
+
+<p>We analyzed the trained random forest, to understand the relative importance of input variables towards the model performance: Mean corpuscular volume was the most important variable, followed by Mean corpuscular hemoglobin and hematocrit. Sex, red blood cells, platelets, red cell distribution width and HbA2 were removed from the final modeling, because their presence didn’t improve evaluation metrics. (Figure 04)</p>
+
+<p>Table 03 – Summary of the results obtained by two models</p>
+
+<table>
+<thead>
+<tr class="header">
+<th>Model</th>
+<th>Input Variables (Predictors)</th>
+<th>Output (Target) Categories</th>
+<th><p>Performance of the best model</p>
+<p>on test set</p></th>
+<th>Most Important Feature (via Decision Tree visualisation)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Model 1</td>
+<td><p><span class="underline">Full Blood Count</span></p>
+<p>MCV, MCH, MCHC,</p>
+<p>Hb, PCV</p>
+<p><span class="underline">Haemoglobin Variants</span></p>
+<p><span class="underline">HbA</span></p></td>
+<td><ul>
+<li><p>Alpha thalassemia carrier</p></li>
+<li><p>‘Normal’ Individuals</p></li>
+</ul></td>
+<td><p><em>XGBoost :</em></p>
+<p>Accuracy – 83%</p>
+<p>AUC – 0.8</p></td>
+<td>MCV ≤ 80fL</td>
+</tr>
+<tr class="even">
+<td>Model 2</td>
+<td><p><span class="underline">Full Blood Count</span></p>
+<p>MCV, MCH</p>
+<p>Hb, PCV, RDW, RBC</p>
+<p><span class="underline">Haemoglobin Variants</span></p>
+<p>HbA, HbA2</p></td>
+<td><ul>
+<li><p>Alpha trait</p></li>
+<li><p>Alpha Silent carrier</p></li>
+</ul></td>
+<td><p><em>XGBoost :</em></p>
+<p>Accuracy – 87%</p>
+<p>AUC – 0.84</p></td>
+<td>MCH ≤ 21pg</td>
+</tr>
+</tbody>
+</table>
+
+<p><img src="https://truthdead.github.io/nival-aiblog/assets/img/2022-05-30-Alphapred/media/image4.png" alt="" /></p>
+
+<p>Figure 03 – Confusion matrix of model 01 (generated via python code)</p>
+
+<p><img src="https://truthdead.github.io/nival-aiblog/assets/img/2022-05-30-Alphapred/media/image5.png" alt="" /></p>
+
+<h3 id="results-of-model-02">Results of Model 02</h3>
+
+<p>Model 02 classified the alpha thalassemia carriers identified from model 01, into alpha thalassemia traits and silent carriers. </p>
+
+<p>Comparison of means between the two groups revealed that values of MCV, MCH, Hb, HCT and RDW was significantly different between them. (Table 04). Hemoglobin variants were not significantly different between the two groups. </p>
+
+<p><img src="https://truthdead.github.io/nival-aiblog/assets/img/2022-05-30-Alphapred/media/image6.png" alt="" /></p>
+
+<p>Upon evaluation, all machine learning algorithms performed satisfactorily, but XGboost performed better than other two: A classification accuracy of 87%, Sensitivity of 89% for alpha traits and AUC of 0.84 (Table 03). The confusion matrix is plotted in Figure 05.</p>
+
+<p>As with model 01, we analyzed the trained random forest model for relative importance of input variables: Mean corpuscular hemoglobin was the most important variable. Sex, mean corpuscular hemoglobin concentration, and platelet count were removed from the final model because they did not improve the classification accuracy or F1 score. (Figure 06)</p>
+
+<p><img src="assets/img/2022-05-30-Alphapred/media/image7.png" alt="Chart Description automatically generated" /></p>
+
+<p>Figure 05 – Confusion matrix of model 02 (generated via python code)</p>
+
+<p><img src="assets/img/2022-05-30-Alphapred/media/image8.png" alt="Chart, bar chart Description automatically generated" /></p>
+
+<h2 id="discussion">Discussion</h2>
+
+<p>We found that both models gave promising results with a relatively small dataset for a machine learning problem, and XGBoost algorithm gave the best results in both models. Sensitivy of 84% in detecting alpha carriers, and sensitivities of 89% for alpha traits and 86% for silent carriers are the most important metrics given the aim of the proposed tool. AUC of ROC of 0.8 and 0.84 for the two models suggest that model performs satisfactorily in general.</p>
+
+<p>The two models were incorporated into a web-based tool, Alpha-pred, as described in the methods section. The tool can be used for further study an can be accessed via <a href="https://alphaphred.herokuapp.com/">https://alphaphred.herokuapp.com/</a></p>
+
+<p>The source code is hosted at <a href="https://github.com/truthdead/AlphaPred">https://github.com/truthdead/AlphaPred</a></p>
+
+<p>In 2002, Amendolia et al studied the performance of a machine learning model on a dataset of 304 adolescents in Sardinia. A neural network with one hidden layer, which classified normal, alpha thalassemia carriers and beta thalassemia carriers, was used. The model achieved only 73% sensitivity in classifying alpha thalassemia carriers; one of the reasons for the result could be that the neural network had only one hidden layer, limiting its ability to learn patterns. Also, they used mean corpuscular volume (MCV), Mean corpuscular hemoglobin (MCH), Red blood cell count (RBC) and hematocrit (HCT), while Model 01 in the current study used two additional parameters : Hemoglobin and HbA and removed RBC from the final model because its presence didn’t improve the performance. In 2003, Amendolia et al managed to achieve 85% sensitivity in detecting alpha thalassemia carriers using a different machine learning algorithm, standard vector machines.</p>
+
+<p>In 2013, Guy et al concluded that MCV, RBC and RDW are the most important variables in differentiating normal individuals from thalassemia minor cases. They achieved a 95% sensitivity in doing so via an artificial neural network. However, in our study, interpretation of random forest algorithm which performed better in classifying alpha carriers and normal, showed that inclusion of RDW and RBC didn’t improve the performance; but MCV was the most important variable influencing the model performance. MCV, was also the ‘first split’ of the random forest model: the single best split that provides the least error while predicting the target outcomes(‘labels’) (Figure …) In 2021, Fu et al trained a standard vector machine to classify a dataset of 303 individuals between alpha thalassemia carriers, beta thalassemia carriers, and non-thalassemic anemia. They achieved an accuracy of 76%, which was less than the performance of the current study. All of these results suggests that bagging techniques such as random forest are more powerful than other traditional machine learning algorithms in classifying structured data.</p>
+
+<p>So far in the published literature, there’s no study using a machine learning approach to differentiate between the two types of alpha thalassemia carriers. Other strengths of this study are the presence of a gold-standard genetic diagnosis as ground truths, which gives accurate labels for the models to train, and that two models are incorporated into a web-based tool, which can be used for further studies via a convenient user interface.</p>
+
+<p>One of the major limitations of this study is the size of the final dataset used (N=203), which is low for a machine learning model; a larger dataset would give more data for the model to learn patterns and would improve the performance metrics. Another limitation is that the data used for modelling are historical study needs to be further validated using prospective data, although the test set used in evaluation was separated before modelling and acted as new data model has not previously seen.</p>
+
+<p>Avenues for further research include validating this tool using prospective real-world data and replicating the approach using a larger dataset. This methodology could be useful to develop a model to predict beta-thalassemia carrier status, which is an important problem both in Sri Lanka and certain parts of the world.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>This proposed machine learning tool showed promising results in our analysis and once validated with prospective data, can be used in the clinical setting. Rather than replacing the gold-standard genetic testing for alpha-thalassemia, we suggest that it can be used as a decision support tool which can rapidly screen a large number of individuals and prioritize those who need genetic testing. The developed tool can be hosted in a web server and can be used remotely using a mobile device or a personal computer, without any additional cost except the use of internet. Hence, this could be especially valuable in resource-constrained settings where genetic testing is either unavailable, time-consuming, or expensive.</p>
+
+  </div><a class="u-url" href="/nival-aiblog/2022/05/30/Alphapred.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/nival-aiblog/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/nival-aiblog/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/nival-aiblog/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Work and talk on Machine learning, Deep learning and AI in health. Inspired by FastAI, built on Fastpages :)</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/truthdead" target="_blank" title="truthdead"><svg class="svg-icon grey"><use xlink:href="/nival-aiblog/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/NivalBmi" target="_blank" title="NivalBmi"><svg class="svg-icon grey"><use xlink:href="/nival-aiblog/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
