@@ -1,0 +1,1800 @@
+<h2 id="intro-and-downloading-data">Intro and Downloading data</h2>
+
+<p>Welcome to this exciting journey aboard Titanic Spaceship!</p>
+
+<p>This is tutorial is almost a complete copy of Jeremy Howard’s excellent <a href="https://www.kaggle.com/code/jhoward/linear-model-and-neural-net-from-scratch">Linear model and neural net from scratch</a> kaggle notebook which was part of the 2022 version of <strong>Deep Learning for Coders</strong> course by FastAI.</p>
+
+<p><em>This also borrows heavily from <a href="https://www.kaggle.com/code/samuelcortinhas/spaceship-titanic-a-complete-guide">Spaceship Titanic: A complete guide</a> notebook by Samuel Cortinhas which is based on the dataset I’m gonna use to build by neural network.</em></p>
+
+<p>Lastly and very importantly, Neural Network from Scratch series by sentdex youtuber channel’s Harrison and Daniel was instrumental in broadening my understanding. I have burrowed their way of coding neural network layers as classes. You can access their video and the book <a href="https://nnfs.io/">here</a></p>
+
+<p>My explanations/comments are going to be minimal, because everything is explained quite well in the resources mentioned above. For neural net foundations(which is the primary aim of this blog/notebook). please refer to course.fast.ai by Jeremy &amp; Co. and the nnfs.io series.</p>
+
+<ul>
+  <li>
+    <p><strong>Objective of dataset</strong>: To predict whether a passenger was transported to an alternate dimension during the Spaceship Titanic’s collision with a spacetime anomaly.</p>
+  </li>
+  <li>
+    <p><strong>My Aim</strong> : is to replicate Jeremy’s work on a different dataset(his work was based on original Titanic dataset), as part of my learning.</p>
+  </li>
+</ul>
+
+<p><em>Let’s go conquer a neural network then!</em></p>
+
+<p>Description of the features of the dataset, copied from the competition page:</p>
+
+<ul>
+  <li>
+    <p>PassengerId - A unique Id for each passenger. Each Id takes the form gggg_pp where gggg indicates a group the passenger is   travelling with and pp is their number within the group. People in a group are often family members, but not always.</p>
+  </li>
+  <li>
+    <p>HomePlanet - The planet the passenger departed from, typically their planet of permanent residence.</p>
+  </li>
+  <li>
+    <p>CryoSleep - Indicates whether the passenger elected to be put into suspended animation for the duration of the voyage. Passengers in cryosleep are confined to their cabins.</p>
+  </li>
+  <li>
+    <p>Cabin - The cabin number where the passenger is staying. Takes the form deck/num/side, where side can be either P for Port or S for Starboard.</p>
+  </li>
+  <li>
+    <p>Destination - The planet the passenger will be debarking to.</p>
+  </li>
+  <li>
+    <p>Age - The age of the passenger.</p>
+  </li>
+  <li>
+    <p>VIP - Whether the passenger has paid for special VIP service during the voyage.</p>
+  </li>
+  <li>
+    <p>RoomService, FoodCourt, ShoppingMall, Spa, VRDeck - Amount the passenger has billed at each of the Spaceship Titanic’s many luxury amenities.</p>
+  </li>
+  <li>
+    <p>Name - The first and last names of the passenger.</p>
+  </li>
+  <li>
+    <p><strong>Transported</strong> - Whether the passenger was transported to another dimension. This is the target, the column you are trying to predict.</p>
+  </li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">kaggle</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+</code></pre></div></div>
+
+<p>Downloading the data from Titanic-spaceship competition via the kaggle API:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s">'spaceship-titanic'</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">.</span><span class="n">exists</span><span class="p">():</span>
+    <span class="kn">import</span> <span class="nn">zipfile</span><span class="p">,</span><span class="n">kaggle</span>
+    <span class="n">kaggle</span><span class="p">.</span><span class="n">api</span><span class="p">.</span><span class="n">competition_download_cli</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+    <span class="n">zipfile</span><span class="p">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="sa">f</span><span class="s">'</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s">.zip'</span><span class="p">).</span><span class="n">extractall</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Setting display options for numpy, pandas and pytorch to widen the output frames:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">np</span><span class="p">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">140</span><span class="p">)</span>
+<span class="n">torch</span><span class="p">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">140</span><span class="p">,</span> <span class="n">sci_mode</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">edgeitems</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">pd</span><span class="p">.</span><span class="n">set_option</span><span class="p">(</span><span class="s">'display.width'</span><span class="p">,</span> <span class="mi">140</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="cleaning-the-data">Cleaning the data</h2>
+
+<p>Looking at some samples from the dataset:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="o">/</span><span class="s">'train.csv'</span><span class="p">)</span>
+<span class="n">df</span><span class="p">.</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div></div>
+
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PassengerId</th>
+      <th>HomePlanet</th>
+      <th>CryoSleep</th>
+      <th>Cabin</th>
+      <th>Destination</th>
+      <th>Age</th>
+      <th>VIP</th>
+      <th>RoomService</th>
+      <th>FoodCourt</th>
+      <th>ShoppingMall</th>
+      <th>Spa</th>
+      <th>VRDeck</th>
+      <th>Name</th>
+      <th>Transported</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0001_01</td>
+      <td>Europa</td>
+      <td>False</td>
+      <td>B/0/P</td>
+      <td>TRAPPIST-1e</td>
+      <td>39.0</td>
+      <td>False</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>Maham Ofracculy</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0002_01</td>
+      <td>Earth</td>
+      <td>False</td>
+      <td>F/0/S</td>
+      <td>TRAPPIST-1e</td>
+      <td>24.0</td>
+      <td>False</td>
+      <td>109.0</td>
+      <td>9.0</td>
+      <td>25.0</td>
+      <td>549.0</td>
+      <td>44.0</td>
+      <td>Juanna Vines</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0003_01</td>
+      <td>Europa</td>
+      <td>False</td>
+      <td>A/0/S</td>
+      <td>TRAPPIST-1e</td>
+      <td>58.0</td>
+      <td>True</td>
+      <td>43.0</td>
+      <td>3576.0</td>
+      <td>0.0</td>
+      <td>6715.0</td>
+      <td>49.0</td>
+      <td>Altark Susent</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0003_02</td>
+      <td>Europa</td>
+      <td>False</td>
+      <td>A/0/S</td>
+      <td>TRAPPIST-1e</td>
+      <td>33.0</td>
+      <td>False</td>
+      <td>0.0</td>
+      <td>1283.0</td>
+      <td>371.0</td>
+      <td>3329.0</td>
+      <td>193.0</td>
+      <td>Solam Susent</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0004_01</td>
+      <td>Earth</td>
+      <td>False</td>
+      <td>F/1/S</td>
+      <td>TRAPPIST-1e</td>
+      <td>16.0</td>
+      <td>False</td>
+      <td>303.0</td>
+      <td>70.0</td>
+      <td>151.0</td>
+      <td>565.0</td>
+      <td>2.0</td>
+      <td>Willy Santantines</td>
+      <td>True</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>Exploring missing values and filling them with the <strong>Mode</strong> of the respective column:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span><span class="p">.</span><span class="n">isna</span><span class="p">().</span><span class="nb">sum</span><span class="p">()</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PassengerId       0
+HomePlanet      201
+CryoSleep       217
+Cabin           199
+Destination     182
+Age             179
+VIP             203
+RoomService     181
+FoodCourt       183
+ShoppingMall    208
+Spa             183
+VRDeck          188
+Name            200
+Transported       0
+dtype: int64
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">modes</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="n">mode</span><span class="p">().</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">modes</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PassengerId                0001_01
+HomePlanet                   Earth
+CryoSleep                    False
+Cabin                      G/734/S
+Destination            TRAPPIST-1e
+Age                           24.0
+VIP                          False
+RoomService                    0.0
+FoodCourt                      0.0
+ShoppingMall                   0.0
+Spa                            0.0
+VRDeck                         0.0
+Name            Alraium Disivering
+Transported                   True
+Name: 0, dtype: object
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span><span class="p">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">modes</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span><span class="p">.</span><span class="n">isna</span><span class="p">().</span><span class="nb">sum</span><span class="p">()</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PassengerId     0
+HomePlanet      0
+CryoSleep       0
+Cabin           0
+Destination     0
+Age             0
+VIP             0
+RoomService     0
+FoodCourt       0
+ShoppingMall    0
+Spa             0
+VRDeck          0
+Name            0
+Transported     0
+dtype: int64
+</code></pre></div></div>
+
+<h2 id="exploratory-data-analysis--feature-engineering">Exploratory Data Analysis &amp; Feature Engineering</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="n">sns</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">use</span><span class="p">(</span><span class="s">'ggplot'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Figure size
+</span><span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># Pie plot
+</span><span class="n">df</span><span class="p">[</span><span class="s">'Transported'</span><span class="p">].</span><span class="n">value_counts</span><span class="p">().</span><span class="n">plot</span><span class="p">.</span><span class="n">pie</span><span class="p">(</span><span class="n">explode</span><span class="o">=</span><span class="p">[</span><span class="mf">0.03</span><span class="p">,</span><span class="mf">0.03</span><span class="p">],</span> <span class="n">autopct</span><span class="o">=</span><span class="s">'%1.1f%%'</span><span class="p">,</span> <span class="n">shadow</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">textprops</span><span class="o">=</span><span class="p">{</span><span class="s">'fontsize'</span><span class="p">:</span><span class="mi">16</span><span class="p">}).</span><span class="n">set_title</span><span class="p">(</span><span class="s">"Target distribution"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Text(0.5, 1.0, 'Target distribution')
+</code></pre></div></div>
+
+<p><img src="output_22_1.png" alt="png" /></p>
+
+<p>Target varaible is quite balanced, hence we don’t need to perform over/undersampling.</p>
+
+<p>Now let’s describe categorical features:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span><span class="p">.</span><span class="n">describe</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="nb">object</span><span class="p">])</span>
+</code></pre></div></div>
+
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PassengerId</th>
+      <th>HomePlanet</th>
+      <th>Cabin</th>
+      <th>Destination</th>
+      <th>Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>count</th>
+      <td>8693</td>
+      <td>8693</td>
+      <td>8693</td>
+      <td>8693</td>
+      <td>8693</td>
+    </tr>
+    <tr>
+      <th>unique</th>
+      <td>8693</td>
+      <td>3</td>
+      <td>6560</td>
+      <td>3</td>
+      <td>8473</td>
+    </tr>
+    <tr>
+      <th>top</th>
+      <td>0001_01</td>
+      <td>Earth</td>
+      <td>G/734/S</td>
+      <td>TRAPPIST-1e</td>
+      <td>Alraium Disivering</td>
+    </tr>
+    <tr>
+      <th>freq</th>
+      <td>1</td>
+      <td>4803</td>
+      <td>207</td>
+      <td>6097</td>
+      <td>202</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>Let’s now replace the strings in these categorical features by numbers. Pandas offers a <code class="language-plaintext highlighter-rouge">get_dummies</code> method to convert these to numbers so that we can multiply them with weights. It’s basically one-hot coding, letting the model know the unqiue levels available in a particular.</p>
+
+<p>We only process HomePlanet and Destination via <code class="language-plaintext highlighter-rouge">get_dummies</code>because others simply have too many unique values (aka levels).</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s">"HomePlanet"</span><span class="p">,</span> <span class="s">"Destination"</span><span class="p">])</span>
+<span class="n">df</span><span class="p">.</span><span class="n">columns</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Index(['PassengerId', 'CryoSleep', 'Cabin', 'Age', 'VIP', 'RoomService', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck', 'Name',
+       'Transported', 'HomePlanet_Earth', 'HomePlanet_Europa', 'HomePlanet_Mars', 'Destination_55 Cancri e', 'Destination_PSO J318.5-22',
+       'Destination_TRAPPIST-1e'],
+      dtype='object')
+</code></pre></div></div>
+
+<p>Our dummy columns are visible at the end of the dataframe!</p>
+
+<p>Looking at numerical features:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span><span class="p">.</span><span class="n">describe</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">number</span><span class="p">))</span>
+</code></pre></div></div>
+
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Age</th>
+      <th>RoomService</th>
+      <th>FoodCourt</th>
+      <th>ShoppingMall</th>
+      <th>Spa</th>
+      <th>VRDeck</th>
+      <th>HomePlanet_Earth</th>
+      <th>HomePlanet_Europa</th>
+      <th>HomePlanet_Mars</th>
+      <th>Destination_55 Cancri e</th>
+      <th>Destination_PSO J318.5-22</th>
+      <th>Destination_TRAPPIST-1e</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>count</th>
+      <td>8693.000000</td>
+      <td>8693.000000</td>
+      <td>8693.000000</td>
+      <td>8693.000000</td>
+      <td>8693.000000</td>
+      <td>8693.000000</td>
+      <td>8693.000000</td>
+      <td>8693.000000</td>
+      <td>8693.000000</td>
+      <td>8693.000000</td>
+      <td>8693.000000</td>
+      <td>8693.000000</td>
+    </tr>
+    <tr>
+      <th>mean</th>
+      <td>28.728517</td>
+      <td>220.009318</td>
+      <td>448.434027</td>
+      <td>169.572300</td>
+      <td>304.588865</td>
+      <td>298.261820</td>
+      <td>0.552514</td>
+      <td>0.245140</td>
+      <td>0.202347</td>
+      <td>0.207063</td>
+      <td>0.091568</td>
+      <td>0.701369</td>
+    </tr>
+    <tr>
+      <th>std</th>
+      <td>14.355438</td>
+      <td>660.519050</td>
+      <td>1595.790627</td>
+      <td>598.007164</td>
+      <td>1125.562559</td>
+      <td>1134.126417</td>
+      <td>0.497263</td>
+      <td>0.430195</td>
+      <td>0.401772</td>
+      <td>0.405224</td>
+      <td>0.288432</td>
+      <td>0.457684</td>
+    </tr>
+    <tr>
+      <th>min</th>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>25%</th>
+      <td>20.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>50%</th>
+      <td>27.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+    </tr>
+    <tr>
+      <th>75%</th>
+      <td>37.000000</td>
+      <td>41.000000</td>
+      <td>61.000000</td>
+      <td>22.000000</td>
+      <td>53.000000</td>
+      <td>40.000000</td>
+      <td>1.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+    </tr>
+    <tr>
+      <th>max</th>
+      <td>79.000000</td>
+      <td>14327.000000</td>
+      <td>29813.000000</td>
+      <td>23492.000000</td>
+      <td>22408.000000</td>
+      <td>24133.000000</td>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>1.000000</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>Samuel’s notebook uncovered the following useful insight regarding <code class="language-plaintext highlighter-rouge">Age</code>. Let’s visualize the feature first:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+
+<span class="c1"># Histogram
+</span><span class="n">sns</span><span class="p">.</span><span class="n">histplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s">'Age'</span><span class="p">,</span> <span class="n">hue</span><span class="o">=</span><span class="s">'Transported'</span><span class="p">,</span> <span class="n">binwidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">kde</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c1"># Aesthetics
+</span><span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">'Age distribution'</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">'Age (years)'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Text(0.5, 0, 'Age (years)')
+</code></pre></div></div>
+
+<p><img src="output_32_1.png" alt="png" /></p>
+
+<p>Notes and insights by Samuel:</p>
+
+<p><em>Notes:</em></p>
+<ul>
+  <li>0-18 year olds were <strong>more</strong> likely to be transported than not.</li>
+  <li>18-25 year olds were <strong>less</strong> likely to be transported than not.</li>
+  <li>Over 25 year olds were about <strong>equally</strong> likely to be transported than not.</li>
+</ul>
+
+<p><em>Insight:</em></p>
+<ul>
+  <li>Create a new feature that indicates whether the passanger is a child, adolescent or adult.</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">p_groups</span> <span class="o">=</span> <span class="p">[</span><span class="s">'child'</span><span class="p">,</span> <span class="s">'young'</span><span class="p">,</span> <span class="s">'adult'</span><span class="p">]</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s">'age_group'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">nan</span>
+
+
+    
+        
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s">'Age'</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">18</span><span class="p">,</span> <span class="s">'age_group'</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s">'Age'</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">18</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s">'Age'</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">25</span><span class="p">),</span> <span class="s">'age_group'</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_groups</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">df</span><span class="p">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s">'Age'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">25</span><span class="p">,</span> <span class="s">'age_group'</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_groups</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span><span class="p">.</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div></div>
+
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PassengerId</th>
+      <th>CryoSleep</th>
+      <th>Cabin</th>
+      <th>Age</th>
+      <th>VIP</th>
+      <th>RoomService</th>
+      <th>FoodCourt</th>
+      <th>ShoppingMall</th>
+      <th>Spa</th>
+      <th>VRDeck</th>
+      <th>Name</th>
+      <th>Transported</th>
+      <th>HomePlanet_Earth</th>
+      <th>HomePlanet_Europa</th>
+      <th>HomePlanet_Mars</th>
+      <th>Destination_55 Cancri e</th>
+      <th>Destination_PSO J318.5-22</th>
+      <th>Destination_TRAPPIST-1e</th>
+      <th>age_group</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0001_01</td>
+      <td>False</td>
+      <td>B/0/P</td>
+      <td>39.0</td>
+      <td>False</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>Maham Ofracculy</td>
+      <td>False</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>adult</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0002_01</td>
+      <td>False</td>
+      <td>F/0/S</td>
+      <td>24.0</td>
+      <td>False</td>
+      <td>109.0</td>
+      <td>9.0</td>
+      <td>25.0</td>
+      <td>549.0</td>
+      <td>44.0</td>
+      <td>Juanna Vines</td>
+      <td>True</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>young</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0003_01</td>
+      <td>False</td>
+      <td>A/0/S</td>
+      <td>58.0</td>
+      <td>True</td>
+      <td>43.0</td>
+      <td>3576.0</td>
+      <td>0.0</td>
+      <td>6715.0</td>
+      <td>49.0</td>
+      <td>Altark Susent</td>
+      <td>False</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>adult</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0003_02</td>
+      <td>False</td>
+      <td>A/0/S</td>
+      <td>33.0</td>
+      <td>False</td>
+      <td>0.0</td>
+      <td>1283.0</td>
+      <td>371.0</td>
+      <td>3329.0</td>
+      <td>193.0</td>
+      <td>Solam Susent</td>
+      <td>False</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>adult</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0004_01</td>
+      <td>False</td>
+      <td>F/1/S</td>
+      <td>16.0</td>
+      <td>False</td>
+      <td>303.0</td>
+      <td>70.0</td>
+      <td>151.0</td>
+      <td>565.0</td>
+      <td>2.0</td>
+      <td>Willy Santantines</td>
+      <td>True</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>child</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>Now we need dummies for <code class="language-plaintext highlighter-rouge">age_group</code> as well:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s">"age_group"</span><span class="p">])</span>
+<span class="n">df</span><span class="p">.</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div></div>
+
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PassengerId</th>
+      <th>CryoSleep</th>
+      <th>Cabin</th>
+      <th>Age</th>
+      <th>VIP</th>
+      <th>RoomService</th>
+      <th>FoodCourt</th>
+      <th>ShoppingMall</th>
+      <th>Spa</th>
+      <th>VRDeck</th>
+      <th>...</th>
+      <th>Transported</th>
+      <th>HomePlanet_Earth</th>
+      <th>HomePlanet_Europa</th>
+      <th>HomePlanet_Mars</th>
+      <th>Destination_55 Cancri e</th>
+      <th>Destination_PSO J318.5-22</th>
+      <th>Destination_TRAPPIST-1e</th>
+      <th>age_group_adult</th>
+      <th>age_group_child</th>
+      <th>age_group_young</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0001_01</td>
+      <td>False</td>
+      <td>B/0/P</td>
+      <td>39.0</td>
+      <td>False</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>False</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0002_01</td>
+      <td>False</td>
+      <td>F/0/S</td>
+      <td>24.0</td>
+      <td>False</td>
+      <td>109.0</td>
+      <td>9.0</td>
+      <td>25.0</td>
+      <td>549.0</td>
+      <td>44.0</td>
+      <td>...</td>
+      <td>True</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0003_01</td>
+      <td>False</td>
+      <td>A/0/S</td>
+      <td>58.0</td>
+      <td>True</td>
+      <td>43.0</td>
+      <td>3576.0</td>
+      <td>0.0</td>
+      <td>6715.0</td>
+      <td>49.0</td>
+      <td>...</td>
+      <td>False</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0003_02</td>
+      <td>False</td>
+      <td>A/0/S</td>
+      <td>33.0</td>
+      <td>False</td>
+      <td>0.0</td>
+      <td>1283.0</td>
+      <td>371.0</td>
+      <td>3329.0</td>
+      <td>193.0</td>
+      <td>...</td>
+      <td>False</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0004_01</td>
+      <td>False</td>
+      <td>F/1/S</td>
+      <td>16.0</td>
+      <td>False</td>
+      <td>303.0</td>
+      <td>70.0</td>
+      <td>151.0</td>
+      <td>565.0</td>
+      <td>2.0</td>
+      <td>...</td>
+      <td>True</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 21 columns</p>
+</div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Expenditure features
+</span><span class="n">exp_feats</span><span class="o">=</span><span class="p">[</span><span class="s">'RoomService'</span><span class="p">,</span> <span class="s">'FoodCourt'</span><span class="p">,</span> <span class="s">'ShoppingMall'</span><span class="p">,</span> <span class="s">'Spa'</span><span class="p">,</span> <span class="s">'VRDeck'</span><span class="p">]</span>
+
+<span class="c1"># Plot expenditure features
+</span><span class="n">fig</span><span class="o">=</span><span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">20</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">var_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">exp_feats</span><span class="p">):</span>
+    <span class="c1"># Left plot
+</span>    <span class="n">ax</span><span class="o">=</span><span class="n">fig</span><span class="p">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">sns</span><span class="p">.</span><span class="n">histplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">var_name</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">kde</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">hue</span><span class="o">=</span><span class="s">'Transported'</span><span class="p">)</span>
+    <span class="n">ax</span><span class="p">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">var_name</span><span class="p">)</span>
+    
+    <span class="c1"># Right plot (truncated)
+</span>    <span class="n">ax</span><span class="o">=</span><span class="n">fig</span><span class="p">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">sns</span><span class="p">.</span><span class="n">histplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">var_name</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">kde</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">hue</span><span class="o">=</span><span class="s">'Transported'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">])</span>
+    <span class="n">ax</span><span class="p">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">var_name</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">tight_layout</span><span class="p">()</span>  <span class="c1"># Improves appearance a bit
+</span><span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="output_39_0.png" alt="png" /></p>
+
+<p>Insights:</p>
+
+<ul>
+  <li>Luxuries such as VR decl and Spa were clearly more used by people who were NOT transported.</li>
+  <li>Need to create a log form for all the above to reduce the skew of the distributions.</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">exp_feats</span><span class="p">:</span>
+    <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s">'log</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span><span class="p">.</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div></div>
+
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PassengerId</th>
+      <th>CryoSleep</th>
+      <th>Cabin</th>
+      <th>Age</th>
+      <th>VIP</th>
+      <th>RoomService</th>
+      <th>FoodCourt</th>
+      <th>ShoppingMall</th>
+      <th>Spa</th>
+      <th>VRDeck</th>
+      <th>...</th>
+      <th>Destination_PSO J318.5-22</th>
+      <th>Destination_TRAPPIST-1e</th>
+      <th>age_group_adult</th>
+      <th>age_group_child</th>
+      <th>age_group_young</th>
+      <th>logRoomService</th>
+      <th>logFoodCourt</th>
+      <th>logShoppingMall</th>
+      <th>logSpa</th>
+      <th>logVRDeck</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0001_01</td>
+      <td>False</td>
+      <td>B/0/P</td>
+      <td>39.0</td>
+      <td>False</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0002_01</td>
+      <td>False</td>
+      <td>F/0/S</td>
+      <td>24.0</td>
+      <td>False</td>
+      <td>109.0</td>
+      <td>9.0</td>
+      <td>25.0</td>
+      <td>549.0</td>
+      <td>44.0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>4.700480</td>
+      <td>2.302585</td>
+      <td>3.258097</td>
+      <td>6.309918</td>
+      <td>3.806662</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0003_01</td>
+      <td>False</td>
+      <td>A/0/S</td>
+      <td>58.0</td>
+      <td>True</td>
+      <td>43.0</td>
+      <td>3576.0</td>
+      <td>0.0</td>
+      <td>6715.0</td>
+      <td>49.0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>3.784190</td>
+      <td>8.182280</td>
+      <td>0.000000</td>
+      <td>8.812248</td>
+      <td>3.912023</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0003_02</td>
+      <td>False</td>
+      <td>A/0/S</td>
+      <td>33.0</td>
+      <td>False</td>
+      <td>0.0</td>
+      <td>1283.0</td>
+      <td>371.0</td>
+      <td>3329.0</td>
+      <td>193.0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.000000</td>
+      <td>7.157735</td>
+      <td>5.918894</td>
+      <td>8.110728</td>
+      <td>5.267858</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0004_01</td>
+      <td>False</td>
+      <td>F/1/S</td>
+      <td>16.0</td>
+      <td>False</td>
+      <td>303.0</td>
+      <td>70.0</td>
+      <td>151.0</td>
+      <td>565.0</td>
+      <td>2.0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>5.717028</td>
+      <td>4.262680</td>
+      <td>5.023881</td>
+      <td>6.338594</td>
+      <td>1.098612</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 26 columns</p>
+</div>
+
+<p>Finally, we are splitting <code class="language-plaintext highlighter-rouge">PassengerId</code> as per its data description:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># New feature - Group
+</span><span class="n">df</span><span class="p">[</span><span class="s">'Group'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s">'PassengerId'</span><span class="p">].</span><span class="nb">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">.</span><span class="n">split</span><span class="p">(</span><span class="s">'_'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]).</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span><span class="p">.</span><span class="n">columns</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Index(['PassengerId', 'CryoSleep', 'Cabin', 'Age', 'VIP', 'RoomService', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck', 'Name',
+       'Transported', 'HomePlanet_Earth', 'HomePlanet_Europa', 'HomePlanet_Mars', 'Destination_55 Cancri e', 'Destination_PSO J318.5-22',
+       'Destination_TRAPPIST-1e', 'age_group_adult', 'age_group_child', 'age_group_young', 'logRoomService', 'logFoodCourt',
+       'logShoppingMall', 'logSpa', 'logVRDeck', 'Group'],
+      dtype='object')
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">added_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s">'HomePlanet_Earth'</span><span class="p">,</span> <span class="s">'HomePlanet_Europa'</span><span class="p">,</span><span class="s">'HomePlanet_Mars'</span><span class="p">,</span> <span class="s">'Destination_55 Cancri e'</span><span class="p">,</span> <span class="s">'Destination_PSO J318.5-22'</span><span class="p">,</span> <span class="s">'Destination_TRAPPIST-1e'</span><span class="p">,</span><span class="s">'age_group_adult'</span><span class="p">,</span> <span class="s">'age_group_child'</span><span class="p">,</span> <span class="s">'age_group_young'</span><span class="p">,</span> <span class="s">'logRoomService'</span><span class="p">,</span> <span class="s">'logFoodCourt'</span><span class="p">,</span>
+       <span class="s">'logShoppingMall'</span><span class="p">,</span> <span class="s">'logSpa'</span><span class="p">,</span> <span class="s">'logVRDeck'</span><span class="p">,</span> <span class="s">'Group'</span><span class="p">]</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span><span class="p">[</span><span class="n">added_cols</span><span class="p">].</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div></div>
+
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>HomePlanet_Earth</th>
+      <th>HomePlanet_Europa</th>
+      <th>HomePlanet_Mars</th>
+      <th>Destination_55 Cancri e</th>
+      <th>Destination_PSO J318.5-22</th>
+      <th>Destination_TRAPPIST-1e</th>
+      <th>age_group_adult</th>
+      <th>age_group_child</th>
+      <th>age_group_young</th>
+      <th>logRoomService</th>
+      <th>logFoodCourt</th>
+      <th>logShoppingMall</th>
+      <th>logSpa</th>
+      <th>logVRDeck</th>
+      <th>Group</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>4.700480</td>
+      <td>2.302585</td>
+      <td>3.258097</td>
+      <td>6.309918</td>
+      <td>3.806662</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>3.784190</td>
+      <td>8.182280</td>
+      <td>0.000000</td>
+      <td>8.812248</td>
+      <td>3.912023</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.000000</td>
+      <td>7.157735</td>
+      <td>5.918894</td>
+      <td>8.110728</td>
+      <td>5.267858</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>5.717028</td>
+      <td>4.262680</td>
+      <td>5.023881</td>
+      <td>6.338594</td>
+      <td>1.098612</td>
+      <td>4</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>What about <code class="language-plaintext highlighter-rouge">CryoSleep</code>?</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">df</span><span class="p">.</span><span class="n">CryoSleep</span><span class="p">.</span><span class="n">unique</span><span class="p">()</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>array([False,  True])
+</code></pre></div></div>
+
+<p>It’s boolean, so we can mulitply with weights. VIP looks the same.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">indep_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s">'Age'</span><span class="p">,</span> <span class="s">'CryoSleep'</span><span class="p">,</span> <span class="s">'VIP'</span><span class="p">]</span> <span class="o">+</span> <span class="n">added_cols</span>
+</code></pre></div></div>
+
+<h2 id="setting-up-a-linear-model">Setting up a linear model</h2>
+
+<p>Single layer neural network with one neuron:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">442</span><span class="p">)</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indep_cols</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">bias</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">preds</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">indep_cols</span><span class="p">].</span><span class="n">values</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">preds</span><span class="p">.</span><span class="n">shape</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(8693, 1)
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">trn_indep</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">indep_cols</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s">'float32'</span><span class="p">)</span>
+<span class="n">trn_dep</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s">'Transported'</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s">'float32'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">print</span><span class="p">(</span><span class="n">trn_indep</span><span class="p">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">trn_dep</span><span class="p">.</span><span class="n">shape</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(8693, 18)
+(8693,)
+</code></pre></div></div>
+
+<p>Single layer neural network with three neurons:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">442</span><span class="p">)</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indep_cols</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span> <span class="c1">#three neurons in this layer
+</span><span class="n">bias</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">bias</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>array([[ 0.01176998, -0.85427749, -0.99987562]])
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">preds</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">indep_cols</span><span class="p">].</span><span class="n">values</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span> <span class="o">+</span> <span class="n">bias</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">preds</span><span class="p">.</span><span class="n">shape</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(8693, 3)
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">preds</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>array([[-48.06963390253141, -18.290557540354897, 25.89840533681499],
+       [-37.91377002769904, -7.504076537856783, 19.929613327882404],
+       [-77.52103870477566, -16.739210482170467, 48.30474706150288],
+       [-49.956656061980745, -2.8342719146155777, 27.74823775227435],
+       [-27.921019655098725, -0.8518280063674349, 7.996057055720733],
+       [-58.52447309612352, -11.829816864262263, 30.01637869888577],
+       [-43.57861207919503, -3.600338170392331, 14.143030534080323],
+       [-42.93381590139605, -11.247805747916502, 13.576656755604825],
+       [-53.425588340898884, -4.639261738916223, 17.59311661596172],
+       [-25.380443498116176, -10.613520203166267, 1.9029395296299394]], dtype=object)
+</code></pre></div></div>
+
+<p>A deeper neural network with 2 hidden layers and an output layer:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">trn_dep</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">trn_dep</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="nb">long</span><span class="p">)</span>
+<span class="n">trn_indep</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">trn_indep</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="nb">float</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">trn_indep</span><span class="p">.</span><span class="n">shape</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>torch.Size([8693, 18])
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">trn_dep</span><span class="p">.</span><span class="n">shape</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>torch.Size([8693])
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#collapse_output
+</span><span class="n">trn_indep</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
+
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tensor([[39.0000,  0.0000,  0.0000,  0.0000,  1.0000,  0.0000,  0.0000,  0.0000,  1.0000,  1.0000,  0.0000,  0.0000,  0.0000,  0.0000,
+          0.0000,  0.0000,  0.0000,  1.0000],
+        [24.0000,  0.0000,  0.0000,  1.0000,  0.0000,  0.0000,  0.0000,  0.0000,  1.0000,  0.0000,  0.0000,  1.0000,  4.7005,  2.3026,
+          3.2581,  6.3099,  3.8067,  2.0000],
+        [58.0000,  0.0000,  1.0000,  0.0000,  1.0000,  0.0000,  0.0000,  0.0000,  1.0000,  1.0000,  0.0000,  0.0000,  3.7842,  8.1823,
+          0.0000,  8.8122,  3.9120,  3.0000],
+        [33.0000,  0.0000,  0.0000,  0.0000,  1.0000,  0.0000,  0.0000,  0.0000,  1.0000,  1.0000,  0.0000,  0.0000,  0.0000,  7.1577,
+          5.9189,  8.1107,  5.2679,  3.0000],
+        [16.0000,  0.0000,  0.0000,  1.0000,  0.0000,  0.0000,  0.0000,  0.0000,  1.0000,  0.0000,  1.0000,  0.0000,  5.7170,  4.2627,
+          5.0239,  6.3386,  1.0986,  4.0000]])
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">vals</span><span class="p">,</span><span class="n">indices</span> <span class="o">=</span> <span class="n">trn_indep</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">trn_indep</span> <span class="o">=</span> <span class="n">trn_indep</span> <span class="o">/</span> <span class="n">vals</span>
+</code></pre></div></div>
+
+<p>Next let’s define our layers, I’m going to define them as classes, so that we can reuse objects of each classes when needed.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#linear layer class
+</span><span class="k">class</span> <span class="nc">linearlayer</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_inputs</span><span class="p">,</span> <span class="n">n_neurons</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">weights</span> <span class="o">=</span> <span class="p">((</span><span class="n">torch</span><span class="p">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n_inputs</span><span class="p">,</span> <span class="n">n_neurons</span><span class="p">)</span><span class="o">-</span><span class="mf">0.3</span><span class="p">)</span><span class="o">/</span><span class="n">n_neurons</span><span class="p">)</span><span class="o">*</span><span class="mi">4</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">weights</span><span class="p">.</span><span class="n">requires_grad_</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">biases</span> <span class="o">=</span> <span class="p">((</span><span class="n">torch</span><span class="p">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_neurons</span><span class="p">))</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="mf">0.1</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">biases</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">biases</span><span class="p">.</span><span class="n">requires_grad_</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">@</span><span class="bp">self</span><span class="p">.</span><span class="n">weights</span> <span class="o">+</span> <span class="bp">self</span><span class="p">.</span><span class="n">biases</span>
+    
+        
+        
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#ReLU activation function
+</span><span class="k">class</span> <span class="nc">ReLU_act</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">clip</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="mf">0.</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#Softmax - for the last layer
+</span><span class="k">class</span> <span class="nc">Softmax_act</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="n">exp_values</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="n">probs</span> <span class="o">=</span> <span class="n">exp_values</span><span class="o">/</span><span class="n">torch</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">exp_values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">probs</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">n_inputs</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">indep_cols</span><span class="p">)</span>
+<span class="n">n_hidden</span><span class="o">=</span><span class="mi">10</span>
+<span class="n">inputs</span><span class="o">=</span><span class="n">trn_indep</span>
+<span class="n">y_true</span><span class="o">=</span><span class="n">trn_dep</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">n_inputs</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>18
+</code></pre></div></div>
+
+<p>Initializing the parameters of our network:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">#collapse_output
+</span>    <span class="n">layer1</span> <span class="o">=</span> <span class="n">linearlayer</span><span class="p">(</span><span class="n">n_inputs</span><span class="p">,</span> <span class="n">n_hidden</span><span class="p">)</span>
+    <span class="n">relu1</span> <span class="o">=</span> <span class="n">ReLU_act</span><span class="p">()</span>
+    <span class="n">layer2</span> <span class="o">=</span> <span class="n">linearlayer</span><span class="p">(</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">n_hidden</span><span class="p">)</span>
+    <span class="n">relu2</span> <span class="o">=</span> <span class="n">ReLU_act</span><span class="p">()</span>
+    <span class="n">layer3</span> <span class="o">=</span> <span class="n">linearlayer</span><span class="p">(</span><span class="n">n_hidden</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">wandbs</span> <span class="o">=</span> <span class="n">layer1</span><span class="p">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">layer2</span><span class="p">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">layer3</span><span class="p">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">layer1</span><span class="p">.</span><span class="n">biases</span><span class="p">,</span> <span class="n">layer2</span><span class="p">.</span><span class="n">biases</span><span class="p">,</span> <span class="n">layer3</span><span class="p">.</span><span class="n">biases</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'These are our weights and biases:'</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">wandbs</span><span class="p">)</span>
+    <span class="n">layer1</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'These are our l1 outputs:'</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">layer1</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">relu1</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">layer1</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'These are our r1 outputs:'</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">relu1</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">layer2</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">relu1</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'These are our l2 outputs:'</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">layer2</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">relu2</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">layer2</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'These are our r2 outputs:'</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">relu2</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">layer3</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">relu2</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'These are our l3 outputs:'</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">layer3</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">softmax</span> <span class="o">=</span> <span class="n">Softmax_act</span><span class="p">()</span>
+    <span class="n">softmax</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">layer3</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    
+    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">'These are our softmax outputs:'</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">softmax</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    
+    
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>These are our weights and biases:
+(tensor([[    -0.0002,      0.2331,      0.0117,      0.2600,      0.2774,      0.1307,      0.1950,      0.2057,      0.1399,     -0.0986],
+        [     0.1946,     -0.0915,      0.0643,      0.0087,      0.2372,      0.2070,      0.2365,      0.2561,      0.2278,     -0.0841],
+        [     0.0705,     -0.1123,     -0.0432,      0.2374,      0.1913,      0.1934,      0.0814,     -0.0839,     -0.1167,      0.2246],
+        [     0.0705,      0.1724,      0.1248,      0.0990,      0.1931,     -0.0708,     -0.0022,      0.2181,      0.0299,      0.1734],
+        [     0.1153,     -0.1066,     -0.0893,      0.1900,      0.2777,      0.1359,      0.1473,      0.1143,      0.2712,     -0.0556],
+        [     0.1509,      0.1151,      0.0681,     -0.0028,      0.2353,      0.1948,      0.0870,      0.0006,     -0.0163,      0.0389],
+        [    -0.0553,      0.2512,      0.0427,      0.2267,     -0.0093,      0.1136,     -0.1013,      0.1188,     -0.0013,      0.1935],
+        [     0.1943,      0.2582,      0.1152,      0.2282,      0.1577,      0.0751,      0.0589,      0.0211,     -0.0506,      0.1875],
+        [     0.0339,      0.1409,      0.0418,      0.1518,      0.0863,      0.0752,     -0.0287,      0.0064,     -0.0014,      0.0103],
+        [    -0.1056,      0.2283,      0.1243,      0.1812,      0.1591,      0.1607,      0.1488,     -0.0419,     -0.0072,     -0.0633],
+        [    -0.1127,     -0.0293,      0.1272,      0.0205,      0.0115,      0.2260,     -0.0251,      0.2198,     -0.0274,      0.0513],
+        [     0.0951,      0.0732,      0.2631,      0.1341,     -0.0821,      0.0232,      0.1464,      0.0473,      0.1390,     -0.0458],
+        [     0.1315,      0.0439,      0.1412,     -0.0664,      0.0940,      0.1332,     -0.0286,      0.0506,      0.0248,      0.0755],
+        [     0.2530,      0.2420,      0.2765,      0.2048,     -0.0882,     -0.0035,      0.1577,      0.0605,      0.0726,      0.2733],
+        [     0.2079,      0.0583,      0.0246,      0.1822,     -0.0031,      0.1719,     -0.0781,      0.2127,      0.2108,      0.0760],
+        [    -0.0597,     -0.0759,      0.1393,      0.2165,      0.2028,      0.0627,     -0.0170,     -0.0651,      0.0579,      0.0773],
+        [     0.1473,     -0.0495,      0.2317,      0.0157,     -0.1144,     -0.0419,      0.1788,      0.2388,      0.1428,      0.0085],
+        [     0.0061,      0.2621,      0.2392,      0.0263,     -0.1017,     -0.0018,      0.1258,      0.1266,      0.1345,     -0.0650]],
+       requires_grad=True), tensor([[-0.0621, -0.0691,  0.2171, -0.0623,  0.1145,  0.0525,  0.2408,  0.2170,  0.1916,  0.0629],
+        [-0.0341, -0.0009, -0.0881,  0.1173,  0.0511, -0.0289,  0.1675,  0.2559,  0.0796, -0.0451],
+        [ 0.1161,  0.0154, -0.0154, -0.0897,  0.1087, -0.0746, -0.0648, -0.0229,  0.1991,  0.2154],
+        [ 0.0914,  0.0735, -0.0821, -0.0773,  0.0863,  0.0284, -0.0972,  0.1577,  0.1829, -0.0549],
+        [ 0.0412,  0.1230,  0.2663,  0.0677,  0.2552, -0.0593,  0.0626,  0.1118, -0.0184,  0.1215],
+        [-0.0723,  0.1951,  0.0814,  0.1907, -0.0819,  0.0893,  0.2131, -0.0612,  0.0357,  0.0940],
+        [ 0.2410,  0.0710, -0.0211,  0.1043,  0.0940,  0.0236, -0.1108, -0.0611,  0.2035, -0.0306],
+        [ 0.1431,  0.2022,  0.1448, -0.1078, -0.0829,  0.1917,  0.2769,  0.1859,  0.0531,  0.1962],
+        [ 0.0767,  0.2175,  0.1521, -0.0540,  0.0504,  0.2353,  0.2760, -0.1082,  0.1134,  0.2455],
+        [ 0.2477,  0.2034,  0.1353,  0.0091, -0.0367,  0.2536,  0.0904,  0.1440, -0.1072, -0.0786]], requires_grad=True), tensor([[ 0.6042,  0.9942],
+        [ 1.1100,  0.6981],
+        [ 0.2269, -0.0373],
+        [ 0.8578,  0.3621],
+        [ 1.1303,  0.1530],
+        [ 1.2218,  0.6881],
+        [ 0.4251,  0.7249],
+        [-0.3872,  0.6244],
+        [ 1.3207, -0.3660],
+        [ 0.7619,  0.8244]], requires_grad=True), tensor([[ 0.0031,  0.0179, -0.0161, -0.0428, -0.0240, -0.0101, -0.0082,  0.0291,  0.0329, -0.0085]], requires_grad=True), tensor([[-0.0072,  0.0279, -0.0105, -0.0237, -0.0117,  0.0383,  0.0107, -0.0042,  0.0435,  0.0144]], requires_grad=True), tensor([[-0.0298, -0.0055]], requires_grad=True))
+
+
+These are our l1 outputs:
+tensor([[ 0.0465,  0.3955,  0.0665,  0.6085,  0.6360,  0.4262,  0.3555,  0.2094,  0.3645, -0.1657],
+        [ 0.4090,  0.5032,  0.7315,  0.6355,  0.3676,  0.2011,  0.2193,  0.5196,  0.4299,  0.2742],
+        [ 0.3745,  0.4630,  0.5139,  1.2414,  0.9952,  0.7398,  0.6521,  0.2783,  0.4553,  0.3533],
+        [ 0.3732,  0.4930,  0.5060,  1.0217,  0.6563,  0.5438,  0.4839,  0.4328,  0.6498,  0.1433],
+        [ 0.2600,  0.4513,  0.6046,  0.5558,  0.4570,  0.4457, -0.0068,  0.6613,  0.2647,  0.4525],
+        [ 0.2802,  0.9090,  0.5997,  0.8559,  0.7023,  0.2610,  0.3909,  0.3403,  0.1594,  0.4420],
+        [ 0.2624,  0.8340,  0.5346,  0.6196,  0.4794,  0.2714,  0.2643,  0.3717,  0.1908,  0.3143],
+        ...,
+        [ 0.2636,  0.7582,  0.6401,  0.8374,  0.4956,  0.4299,  0.6259,  0.4212,  0.6110,  0.0037],
+        [ 0.3290,  0.7838,  0.6694,  0.7983,  0.3901,  0.3895,  0.6834,  0.4900,  0.6283,  0.0081],
+        [ 0.2696,  0.7915,  0.7026,  1.2959,  0.6626,  0.6849,  0.6939,  0.4754,  0.5521,  0.4695],
+        [ 0.5637,  0.7453,  0.7932,  0.5127,  0.4434,  0.2524,  0.6015,  0.7450,  0.5453,  0.1351],
+        [ 0.1594,  0.9366,  0.5459,  0.6524,  0.4158,  0.3292,  0.2400,  0.5606,  0.3965,  0.0767],
+        [ 0.2173,  0.8266,  0.7594,  0.9643,  0.3819,  0.4520,  0.6310,  0.6241,  0.6840,  0.1978],
+        [ 0.3641,  0.8806,  0.6636,  0.7896,  0.4980,  0.4865,  0.6539,  0.4849,  0.6162,  0.0276]], grad_fn=&lt;AddBackward0&gt;)
+
+
+These are our r1 outputs:
+tensor([[0.0465, 0.3955, 0.0665, 0.6085, 0.6360, 0.4262, 0.3555, 0.2094, 0.3645, 0.0000],
+        [0.4090, 0.5032, 0.7315, 0.6355, 0.3676, 0.2011, 0.2193, 0.5196, 0.4299, 0.2742],
+        [0.3745, 0.4630, 0.5139, 1.2414, 0.9952, 0.7398, 0.6521, 0.2783, 0.4553, 0.3533],
+        [0.3732, 0.4930, 0.5060, 1.0217, 0.6563, 0.5438, 0.4839, 0.4328, 0.6498, 0.1433],
+        [0.2600, 0.4513, 0.6046, 0.5558, 0.4570, 0.4457, 0.0000, 0.6613, 0.2647, 0.4525],
+        [0.2802, 0.9090, 0.5997, 0.8559, 0.7023, 0.2610, 0.3909, 0.3403, 0.1594, 0.4420],
+        [0.2624, 0.8340, 0.5346, 0.6196, 0.4794, 0.2714, 0.2643, 0.3717, 0.1908, 0.3143],
+        ...,
+        [0.2636, 0.7582, 0.6401, 0.8374, 0.4956, 0.4299, 0.6259, 0.4212, 0.6110, 0.0037],
+        [0.3290, 0.7838, 0.6694, 0.7983, 0.3901, 0.3895, 0.6834, 0.4900, 0.6283, 0.0081],
+        [0.2696, 0.7915, 0.7026, 1.2959, 0.6626, 0.6849, 0.6939, 0.4754, 0.5521, 0.4695],
+        [0.5637, 0.7453, 0.7932, 0.5127, 0.4434, 0.2524, 0.6015, 0.7450, 0.5453, 0.1351],
+        [0.1594, 0.9366, 0.5459, 0.6524, 0.4158, 0.3292, 0.2400, 0.5606, 0.3965, 0.0767],
+        [0.2173, 0.8266, 0.7594, 0.9643, 0.3819, 0.4520, 0.6310, 0.6241, 0.6840, 0.1978],
+        [0.3641, 0.8806, 0.6636, 0.7896, 0.4980, 0.4865, 0.6539, 0.4849, 0.6162, 0.0276]], grad_fn=&lt;ClampBackward1&gt;)
+
+
+These are our l2 outputs:
+tensor([[ 0.1788,  0.3784,  0.1961,  0.0859,  0.2355,  0.1763,  0.2745,  0.2243,  0.3367,  0.2174],
+        [ 0.3220,  0.4116,  0.2579, -0.0955,  0.2618,  0.2804,  0.4132,  0.4018,  0.5158,  0.3829],
+        [ 0.4339,  0.6410,  0.3890,  0.0903,  0.4595,  0.3141,  0.4068,  0.4590,  0.6507,  0.3687],
+        [ 0.3566,  0.5638,  0.3251,  0.0046,  0.3596,  0.3282,  0.4666,  0.3938,  0.6289,  0.4177],
+        [ 0.2960,  0.4863,  0.3065, -0.0497,  0.1770,  0.3261,  0.4764,  0.4248,  0.3754,  0.3667],
+        [ 0.3670,  0.4384,  0.2241,  0.0423,  0.3642,  0.2121,  0.3428,  0.5588,  0.5101,  0.2422],
+        [ 0.2763,  0.3741,  0.1834,  0.0262,  0.2649,  0.2036,  0.3613,  0.4662,  0.4422,  0.2451],
+        ...,
+        [ 0.3498,  0.4886,  0.2095,  0.0291,  0.3451,  0.2555,  0.4172,  0.3680,  0.6598,  0.4025],
+        [ 0.3693,  0.4834,  0.2048,  0.0112,  0.3305,  0.2773,  0.4418,  0.3806,  0.6904,  0.4129],
+        [ 0.5209,  0.6908,  0.2949,  0.0601,  0.3974,  0.3924,  0.4738,  0.5311,  0.7260,  0.3913],
+        [ 0.3983,  0.4815,  0.3269, -0.0498,  0.3313,  0.3176,  0.5540,  0.4679,  0.6727,  0.4875],
+        [ 0.2548,  0.4201,  0.1639,  0.0116,  0.2426,  0.2281,  0.4484,  0.4445,  0.4960,  0.3393],
+        [ 0.4534,  0.5900,  0.2193, -0.0076,  0.3166,  0.3599,  0.4884,  0.4361,  0.7055,  0.4458],
+        [ 0.3559,  0.5106,  0.2420,  0.0457,  0.3540,  0.2792,  0.4954,  0.4229,  0.6938,  0.4276]], grad_fn=&lt;AddBackward0&gt;)
+
+
+These are our r2 outputs:
+tensor([[0.1788, 0.3784, 0.1961, 0.0859, 0.2355, 0.1763, 0.2745, 0.2243, 0.3367, 0.2174],
+        [0.3220, 0.4116, 0.2579, 0.0000, 0.2618, 0.2804, 0.4132, 0.4018, 0.5158, 0.3829],
+        [0.4339, 0.6410, 0.3890, 0.0903, 0.4595, 0.3141, 0.4068, 0.4590, 0.6507, 0.3687],
+        [0.3566, 0.5638, 0.3251, 0.0046, 0.3596, 0.3282, 0.4666, 0.3938, 0.6289, 0.4177],
+        [0.2960, 0.4863, 0.3065, 0.0000, 0.1770, 0.3261, 0.4764, 0.4248, 0.3754, 0.3667],
+        [0.3670, 0.4384, 0.2241, 0.0423, 0.3642, 0.2121, 0.3428, 0.5588, 0.5101, 0.2422],
+        [0.2763, 0.3741, 0.1834, 0.0262, 0.2649, 0.2036, 0.3613, 0.4662, 0.4422, 0.2451],
+        ...,
+        [0.3498, 0.4886, 0.2095, 0.0291, 0.3451, 0.2555, 0.4172, 0.3680, 0.6598, 0.4025],
+        [0.3693, 0.4834, 0.2048, 0.0112, 0.3305, 0.2773, 0.4418, 0.3806, 0.6904, 0.4129],
+        [0.5209, 0.6908, 0.2949, 0.0601, 0.3974, 0.3924, 0.4738, 0.5311, 0.7260, 0.3913],
+        [0.3983, 0.4815, 0.3269, 0.0000, 0.3313, 0.3176, 0.5540, 0.4679, 0.6727, 0.4875],
+        [0.2548, 0.4201, 0.1639, 0.0116, 0.2426, 0.2281, 0.4484, 0.4445, 0.4960, 0.3393],
+        [0.4534, 0.5900, 0.2193, 0.0000, 0.3166, 0.3599, 0.4884, 0.4361, 0.7055, 0.4458],
+        [0.3559, 0.5106, 0.2420, 0.0457, 0.3540, 0.2792, 0.4954, 0.4229, 0.6938, 0.4276]], grad_fn=&lt;ClampBackward1&gt;)
+
+
+These are our l3 outputs:
+tensor([[1.7382, 1.0127],
+        [2.3116, 1.5027],
+        [3.1483, 1.8254],
+        [2.8914, 1.7114],
+        [2.1701, 1.6438],
+        [2.2242, 1.4845],
+        [1.9086, 1.3069],
+        ...,
+        [2.7114, 1.5372],
+        [2.7652, 1.5826],
+        [3.3515, 2.0682],
+        [2.8961, 1.8331],
+        [2.1227, 1.4342],
+        [3.0565, 1.8808],
+        [2.8763, 1.6804]], grad_fn=&lt;AddBackward0&gt;)
+
+
+These are our softmax outputs:
+tensor([[0.6738, 0.3262],
+        [0.6919, 0.3081],
+        [0.7897, 0.2103],
+        [0.7649, 0.2351],
+        [0.6286, 0.3714],
+        [0.6769, 0.3231],
+        [0.6460, 0.3540],
+        ...,
+        [0.7639, 0.2361],
+        [0.7654, 0.2346],
+        [0.7830, 0.2170],
+        [0.7433, 0.2567],
+        [0.6656, 0.3344],
+        [0.7642, 0.2358],
+        [0.7678, 0.2322]], grad_fn=&lt;DivBackward0&gt;)
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">y_preds</span> <span class="o">=</span> <span class="n">softmax</span><span class="p">.</span><span class="n">output</span>
+
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#hide
+</span><span class="n">wandbs</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(tensor([[    -0.0002,      0.2331,      0.0117,      0.2600,      0.2774,      0.1307,      0.1950,      0.2057,      0.1399,     -0.0986],
+         [     0.1946,     -0.0915,      0.0643,      0.0087,      0.2372,      0.2070,      0.2365,      0.2561,      0.2278,     -0.0841],
+         [     0.0705,     -0.1123,     -0.0432,      0.2374,      0.1913,      0.1934,      0.0814,     -0.0839,     -0.1167,      0.2246],
+         [     0.0705,      0.1724,      0.1248,      0.0990,      0.1931,     -0.0708,     -0.0022,      0.2181,      0.0299,      0.1734],
+         [     0.1153,     -0.1066,     -0.0893,      0.1900,      0.2777,      0.1359,      0.1473,      0.1143,      0.2712,     -0.0556],
+         [     0.1509,      0.1151,      0.0681,     -0.0028,      0.2353,      0.1948,      0.0870,      0.0006,     -0.0163,      0.0389],
+         [    -0.0553,      0.2512,      0.0427,      0.2267,     -0.0093,      0.1136,     -0.1013,      0.1188,     -0.0013,      0.1935],
+         [     0.1943,      0.2582,      0.1152,      0.2282,      0.1577,      0.0751,      0.0589,      0.0211,     -0.0506,      0.1875],
+         [     0.0339,      0.1409,      0.0418,      0.1518,      0.0863,      0.0752,     -0.0287,      0.0064,     -0.0014,      0.0103],
+         [    -0.1056,      0.2283,      0.1243,      0.1812,      0.1591,      0.1607,      0.1488,     -0.0419,     -0.0072,     -0.0633],
+         [    -0.1127,     -0.0293,      0.1272,      0.0205,      0.0115,      0.2260,     -0.0251,      0.2198,     -0.0274,      0.0513],
+         [     0.0951,      0.0732,      0.2631,      0.1341,     -0.0821,      0.0232,      0.1464,      0.0473,      0.1390,     -0.0458],
+         [     0.1315,      0.0439,      0.1412,     -0.0664,      0.0940,      0.1332,     -0.0286,      0.0506,      0.0248,      0.0755],
+         [     0.2530,      0.2420,      0.2765,      0.2048,     -0.0882,     -0.0035,      0.1577,      0.0605,      0.0726,      0.2733],
+         [     0.2079,      0.0583,      0.0246,      0.1822,     -0.0031,      0.1719,     -0.0781,      0.2127,      0.2108,      0.0760],
+         [    -0.0597,     -0.0759,      0.1393,      0.2165,      0.2028,      0.0627,     -0.0170,     -0.0651,      0.0579,      0.0773],
+         [     0.1473,     -0.0495,      0.2317,      0.0157,     -0.1144,     -0.0419,      0.1788,      0.2388,      0.1428,      0.0085],
+         [     0.0061,      0.2621,      0.2392,      0.0263,     -0.1017,     -0.0018,      0.1258,      0.1266,      0.1345,     -0.0650]],
+        requires_grad=True),
+ tensor([[-0.0621, -0.0691,  0.2171, -0.0623,  0.1145,  0.0525,  0.2408,  0.2170,  0.1916,  0.0629],
+         [-0.0341, -0.0009, -0.0881,  0.1173,  0.0511, -0.0289,  0.1675,  0.2559,  0.0796, -0.0451],
+         [ 0.1161,  0.0154, -0.0154, -0.0897,  0.1087, -0.0746, -0.0648, -0.0229,  0.1991,  0.2154],
+         [ 0.0914,  0.0735, -0.0821, -0.0773,  0.0863,  0.0284, -0.0972,  0.1577,  0.1829, -0.0549],
+         [ 0.0412,  0.1230,  0.2663,  0.0677,  0.2552, -0.0593,  0.0626,  0.1118, -0.0184,  0.1215],
+         [-0.0723,  0.1951,  0.0814,  0.1907, -0.0819,  0.0893,  0.2131, -0.0612,  0.0357,  0.0940],
+         [ 0.2410,  0.0710, -0.0211,  0.1043,  0.0940,  0.0236, -0.1108, -0.0611,  0.2035, -0.0306],
+         [ 0.1431,  0.2022,  0.1448, -0.1078, -0.0829,  0.1917,  0.2769,  0.1859,  0.0531,  0.1962],
+         [ 0.0767,  0.2175,  0.1521, -0.0540,  0.0504,  0.2353,  0.2760, -0.1082,  0.1134,  0.2455],
+         [ 0.2477,  0.2034,  0.1353,  0.0091, -0.0367,  0.2536,  0.0904,  0.1440, -0.1072, -0.0786]], requires_grad=True),
+ tensor([[ 0.6042,  0.9942],
+         [ 1.1100,  0.6981],
+         [ 0.2269, -0.0373],
+         [ 0.8578,  0.3621],
+         [ 1.1303,  0.1530],
+         [ 1.2218,  0.6881],
+         [ 0.4251,  0.7249],
+         [-0.3872,  0.6244],
+         [ 1.3207, -0.3660],
+         [ 0.7619,  0.8244]], requires_grad=True),
+ tensor([[ 0.0031,  0.0179, -0.0161, -0.0428, -0.0240, -0.0101, -0.0082,  0.0291,  0.0329, -0.0085]], requires_grad=True),
+ tensor([[-0.0072,  0.0279, -0.0105, -0.0237, -0.0117,  0.0383,  0.0107, -0.0042,  0.0435,  0.0144]], requires_grad=True),
+ tensor([[-0.0298, -0.0055]], requires_grad=True))
+</code></pre></div></div>
+
+<h2 id="defining-our-loss-function">Defining our loss function:</h2>
+
+<p>Negative log loss is going to be our loss function. We use our predictions from softmax to calculate the loss. I won’t bore youwith all the explanations. That is done in the resources I mentioned above, in a better way than I ever can.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">negative_log_loss</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_preds</span><span class="p">,</span> <span class="n">y_true</span><span class="p">):</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_preds</span><span class="p">)</span>
+        <span class="n">y_pred_clipped</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">clip</span><span class="p">(</span><span class="n">y_preds</span><span class="p">,</span> <span class="mf">1e-7</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="mf">1e-7</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">correct_confidences</span> <span class="o">=</span> <span class="n">y_pred_clipped</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">samples</span><span class="p">)),</span> <span class="n">y_true</span><span class="p">]</span>
+           
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">correct_confidences</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">y_pred_clipped</span><span class="o">*</span><span class="n">y_true</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">negative_log_likelihoods</span> <span class="o">=</span> <span class="o">-</span><span class="n">torch</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">correct_confidences</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">negative_log_likelihoods</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="training-our-neural-network">‘Training’ our neural network</h2>
+
+<p>First we are gonna write a function to update our weights and biases according to our loss(i.e. by reducing the product of the gradient and learning rate by our w&amp;bs.)</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">update_wandbs</span><span class="p">(</span><span class="n">wandbs</span><span class="p">,</span> <span class="n">lr</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">wandbs</span><span class="p">:</span>
+        <span class="n">layer</span><span class="p">.</span><span class="n">sub_</span><span class="p">(</span><span class="n">layer</span><span class="p">.</span><span class="n">grad</span> <span class="o">*</span> <span class="n">lr</span><span class="p">)</span>
+        <span class="c1">#print(layer.grad)
+</span>        <span class="n">layer</span><span class="p">.</span><span class="n">grad</span><span class="p">.</span><span class="n">zero_</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>Then we write a training loop for our network, to train for one ‘epoch’.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">one_epoch</span><span class="p">(</span><span class="n">wandbs</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+    <span class="n">layer1</span><span class="p">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">layer2</span><span class="p">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">layer3</span><span class="p">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">layer1</span><span class="p">.</span><span class="n">biases</span><span class="p">,</span> <span class="n">layer2</span><span class="p">.</span><span class="n">biases</span><span class="p">,</span> <span class="n">layer3</span><span class="p">.</span><span class="n">biases</span> <span class="o">=</span> <span class="n">wandbs</span>
+    <span class="c1">#print('These are our weights and biases:')
+</span>    <span class="c1">#print(wandbs)
+</span>    <span class="n">layer1</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+    <span class="c1">#print("\n")
+</span>    <span class="c1">#print('These are our l1 outputs:')
+</span>    <span class="c1">#print(layer1.output)
+</span>    <span class="n">relu1</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">layer1</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="c1">#print("\n")
+</span>    <span class="c1">#print('These are our r1 outputs:')
+</span>    <span class="c1">#print(relu1.output)
+</span>    <span class="n">layer2</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">relu1</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="c1">#print("\n")
+</span>    <span class="c1">#print('These are our l2 outputs:')
+</span>    <span class="c1">#print(layer2.output)
+</span>    <span class="n">relu2</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">layer2</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="c1">#print("\n")
+</span>    <span class="c1">#print('These are our r2 outputs:')
+</span>    <span class="c1">#print(relu2.output)
+</span>    <span class="n">layer3</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">relu2</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="c1">#print("\n")
+</span>    <span class="c1">#print('These are our l3 outputs:')
+</span>    <span class="c1">#print(layer3.output)
+</span>    <span class="n">softmax</span> <span class="o">=</span> <span class="n">Softmax_act</span><span class="p">()</span>
+    <span class="n">softmax</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">layer3</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">y_preds</span> <span class="o">=</span> <span class="n">softmax</span><span class="p">.</span><span class="n">output</span>
+    <span class="c1">#print("\n")
+</span>    <span class="c1">#print('These are our softmax outputs:')
+</span>    <span class="c1">#print(softmax.output)
+</span>    <span class="n">nll</span> <span class="o">=</span> <span class="n">negative_log_loss</span><span class="p">()</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">nll</span><span class="p">.</span><span class="n">calculate</span><span class="p">(</span><span class="n">y_preds</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span>
+    <span class="n">loss</span><span class="p">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="n">no_grad</span><span class="p">():</span> <span class="n">update_wandbs</span><span class="p">(</span><span class="n">wandbs</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"</span><span class="si">{</span><span class="n">loss</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="s">"</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s">"; "</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Then, we define another function so that we can train the model easily for multiple epochs. Learning rate is an important hyperparameter here. Refer to Jeremy’s notebooks/videos if you don’t already know about it.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">train_model</span><span class="p">(</span><span class="n">wandbs</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+    <span class="c1">#torch.manual_seed(442)
+</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span> <span class="n">one_epoch</span><span class="p">(</span><span class="n">wandbs</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y_preds</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">y_preds</span> <span class="o">=</span> <span class="n">train_model</span><span class="p">(</span><span class="n">wandbs</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0.801; 1.816; 0.827; 0.694; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 0.693; 
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">y_preds</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tensor([[0.6738, 0.3262],
+        [0.6919, 0.3081],
+        [0.7897, 0.2103],
+        [0.7649, 0.2351],
+        [0.6286, 0.3714],
+        [0.6769, 0.3231],
+        [0.6460, 0.3540],
+        ...,
+        [0.7639, 0.2361],
+        [0.7654, 0.2346],
+        [0.7830, 0.2170],
+        [0.7433, 0.2567],
+        [0.6656, 0.3344],
+        [0.7642, 0.2358],
+        [0.7678, 0.2322]], grad_fn=&lt;DivBackward0&gt;)
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">accuracy</span><span class="p">(</span><span class="n">y_preds</span><span class="p">,</span> <span class="n">y_true</span><span class="p">):</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_preds</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">'Accuracy is </span><span class="si">{</span><span class="p">(</span><span class="n">y_true</span><span class="p">.</span><span class="nb">bool</span><span class="p">()</span><span class="o">==</span><span class="p">(</span><span class="n">y_preds</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">samples</span><span class="p">)),</span> <span class="n">y_true</span><span class="p">]</span><span class="o">&gt;</span><span class="mf">0.5</span><span class="p">)).</span><span class="nb">float</span><span class="p">().</span><span class="n">mean</span><span class="p">()</span><span class="o">*</span><span class="mi">100</span> <span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="s"> percent'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">accuracy</span><span class="p">(</span><span class="n">y_preds</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Accuracy is 0.000 percent
+</code></pre></div></div>
+
+<p>Well, My network is still pretty crappy. I tried a lot, but couldn’t get it to train yet. I’m gonna keep trying. But for now, I’m going to use <a href="https://www.kaggle.com/code/jhoward/why-you-should-use-a-framework">a framework</a> to make my life easier. Afterall, purpose of this whole exercise was not to get an accurate model, but to understand the nuts and bolts of a neural network!</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div></div>
